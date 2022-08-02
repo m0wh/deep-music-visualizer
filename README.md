@@ -12,7 +12,7 @@ This repo has been tested on Python3
 Assuming you have python installed, open terminal and run these commands:
 
 ```bash
-git clone https://github.com/msieg/deep-music-visualizer.git
+git clone https://github.com/m0wh/deep-music-visualizer
 cd deep-music-visualizer
 pip install -r requirements.txt
 ```
@@ -54,7 +54,7 @@ python visualize.py -s --song beethoven.mp3
 
 ## Parameters
 
-### --song: input song
+### --song: input/output song
 
 Audio file of type mp3, wav, or ogg.
 
@@ -64,6 +64,28 @@ Example:
 
 ```bash
 python visualize.py --song beethoven.mp3
+```
+
+### --ghost_song: input song
+
+Audio file of type mp3, wav, or ogg.
+
+If specified, this song will be used for generating the video, but will not be heard in the output video. It is useful if you want to remove parts of the song (bass, fx...) to make the video react only to the drums or to anything else.
+
+Example:
+
+```bash
+python visualize.py --song techno.mp3 --ghost_song drumsonly.mp3
+```
+
+### --output_ghost: output ghost
+
+If specified, a videofile named `<output>_ghost.mp4` will be generated too. Useful to analize the effects of the sound on the video. Useless if `--ghost_song` is not specified.
+
+Example:
+
+```bash
+python visualize.py --song techno.mp3 --ghost_song drumsonly.mp3
 ```
 
 ### --resolution: GAN resolution

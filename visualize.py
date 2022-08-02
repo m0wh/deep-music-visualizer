@@ -15,6 +15,8 @@ parser.add_argument("-d", action="store_true", default=False)
 parser.add_argument("-s", action="store_true", default=False)
 parser.add_argument("--scaling", type=int, default=1)
 parser.add_argument("--song", required=True)
+parser.add_argument("--ghost_song")
+parser.add_argument("--output_ghost", action="store_true", default=False)
 parser.add_argument("--resolution", default='512')
 parser.add_argument("--duration", type=int)
 parser.add_argument("--pitch_sensitivity", type=int, default=220)
@@ -30,12 +32,13 @@ parser.add_argument("--smooth_factor", type=int, default=20)
 parser.add_argument("--batch_size", type=int, default=30)
 parser.add_argument("--use_previous_classes", type=int, default=0)
 parser.add_argument("--use_previous_vectors", type=int, default=0)
-parser.add_argument("--output_file", default="output.mp4")
+parser.add_argument("--output_file", default="output")
 args = parser.parse_args()
 
 #if enabled uses disk to avoid storing all images in ram
 save_only = args.s
 use_disk = args.d
+output_ghost = args.output_ghost
 
 if use_disk == True:
     import os
@@ -46,8 +49,14 @@ if use_disk == True:
     tmp_folder_path = os.path.join(os.getcwd(), "frames_output")
 
 #read song
+
 if args.song:
-    song=args.song
+    if args.ghost_song:
+        song=args.ghost_song
+        output_song=args.song
+    else:
+        song=args.song
+        output_song=args.song
     print('\nReading audio \n')
     y, sr = librosa.load(song)
 else:
@@ -404,28 +413,40 @@ if not save_only:
 
 #Save video
 try:
-    aud = mpy.AudioFileClip(song, fps = 44100) 
+    ghost_aud = mpy.AudioFileClip(song, fps = 44100)
+    final_aud = mpy.AudioFileClip(output_song, fps = 44100)
 
     if args.duration:
-        aud.duration=args.duration
+        ghost_aud.duration=args.duration
+        final_aud.duration=args.duration
 
     if use_disk == True:
         files_path = [os.path.join(tmp_folder_path, x)
                     for x in os.listdir(tmp_folder_path) if x.endswith('.png')]
         files_path.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
 
-        clip = mpy.ImageSequenceClip(files_path, fps=22050/frame_length)
-        clip = clip.set_audio(aud)
-        clip.write_videofile(outname, audio_codec='aac')
+        final_clip = mpy.ImageSequenceClip(files_path, fps=22050/frame_length)
+        final_clip = final_clip.set_audio(final_aud)
+        final_clip.write_videofile('outputs/' + outname + '.mp4', audio_codec='aac')
+
+        if args.ghost_song and output_ghost == True:
+            ghost_clip = mpy.ImageSequenceClip(files_path, fps=22050/frame_length)
+            ghost_clip = ghost_clip.set_audio(ghost_aud)
+            ghost_clip.write_videofile('outputs/' + outname + '_ghost.mp4', audio_codec='aac')
     else:
-        clip = mpy.ImageSequenceClip(frames, fps=22050/frame_length)
-        clip = clip.set_audio(aud)
-        clip.write_videofile(outname, audio_codec='aac')
+        final_clip = mpy.ImageSequenceClip(frames, fps=22050/frame_length)
+        final_clip = final_clip.set_audio(final_aud)
+        final_clip.write_videofile('outputs/' + outname + '.mp4', audio_codec='aac')
+
+        if args.ghost_song and output_ghost == True:
+            ghost_clip = mpy.ImageSequenceClip(frames, fps=22050/frame_length)
+            ghost_clip = ghost_clip.set_audio(ghost_aud)
+            ghost_clip.write_videofile('outputs/' + outname + '_ghost.mp4', audio_codec='aac')
 
     # Removing tmp directory
     if use_disk == True and not save_only:
         print("\nCleaning tmp directory\n")
-        if os.path.exists(tmp_folder_path):
-            shutil.rmtree(tmp_folder_path)
+        # if os.path.exists(tmp_folder_path):
+        #     shutil.rmtree(tmp_folder_path)
 except Exception as e:
-    print("Failed to save the file")
+    print("Failed to save the files")
